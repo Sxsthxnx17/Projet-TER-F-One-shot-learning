@@ -1,4 +1,4 @@
-import { Brain, Circle, Heart, Search } from 'lucide-react'
+import { Brain, Circle, Zap, Search } from 'lucide-react'
 import React from 'react'
 import hero from '../assets/hero.jpg'
 
@@ -17,7 +17,6 @@ const Hero = () => {
                 <span className='font-bold text-black block lg:inline' >
                     est qui 
                     <span className='text-blue-900'>?</span>
-
                 </span>
             </h2>
             <div className='flex gap-3 mt-4 justify-center lg:justify-start'
@@ -33,19 +32,16 @@ const Hero = () => {
                 data-aos='zoom-in' 
                 data-aos-delay="200"
                 className='bg-white w-72 rounded-3xl p-6 border  
-                border-gray-100 shadow-xl lg:shadow-2xl transition '>
+                border-gray-100 shadow-xl lg:shadow-2xl transition hover:shadow-2xl hover:scale-105'>
                     <div className='ml-4 w-10 h-10 flex items-center justify-center
                     rounded-lg bg-blue-100 mb-4 '>
-                        <span className='text-blue-500 text-xl '>
-                            <Brain className='text-blue-600 w-6 h-6 '/>
-                        </span>
+                        <Brain className='text-blue-600 w-6 h-6 '/>
                     </div>
                     <h3 className='ml-4 text-lg font-semibold text-gray-800 '> 
-                        Comment cela marche ?
-
+                        Meta-Learning Intelligent
                     </h3>
                     <p className='ml-4 text-gray-500 text-sm mt-2'>
-                        Lorem ipsum dolor sit amet, consectetur
+                        Notre IA apprend à reconnaître des visages avec une seule photo grâce au One-Shot Learning.
                     </p>
                 </div>
 
@@ -53,22 +49,18 @@ const Hero = () => {
                 data-aos='zoom-in'
                 data-aos-delay="300"
                 className='bg-white w-72 rounded-3xl p-6 border  
-                border-gray-100 shadow-xl lg:shadow-2xl transition '>
+                border-gray-100 shadow-xl lg:shadow-2xl transition hover:shadow-2xl hover:scale-105'>
                     <div className='ml-4 w-10 h-10 flex items-center justify-center
                     rounded-lg bg-blue-100 mb-4 '>
-                        <span className='text-blue-700 text-xl '>
-                            <Search className='text-blue-600 w-6 h-6 '/>
-                        </span>
+                        <Zap className='text-blue-600 w-6 h-6 '/>
                     </div>
                     <h3 className='ml-4 text-lg font-semibold text-gray-800 '> 
-                        we only lookk once?
-
+                        Détection Ultra-Rapide
                     </h3>
                     <p className='ml-4 text-gray-500 text-sm mt-2'>
-                        Lorem ipsum dolor sit amet, consectetur
+                        YOLO détecte et localise tous les visages en temps réel, même dans les grandes foules.
                     </p>
                 </div>
-
             </div>
         </div>
         <div 
@@ -78,18 +70,15 @@ const Hero = () => {
         justify-center'>
             <div className='w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 
             lg:w-[600px] lg:h-[500px] overflow-hidden border-8 border-white
-            shadow-lg lg:shadow-lg
-            rounded-[60%_40%_30%_60%/60%_30%_70%_30%] relative z-10'>
+            shadow-lg lg:shadow-2xl
+            rounded-[60%_40%_30%_60%/60%_30%_70%_30%] relative z-10
+            hover:scale-105 transition-transform duration-500'>
                 <img 
                 src={hero} 
-                alt="tête numérique" 
+                alt="Intelligence Artificielle" 
                 className='object-cover w-full h-full'/>
-
             </div>
-
-
         </div>
-
     </section>
   )
 }
