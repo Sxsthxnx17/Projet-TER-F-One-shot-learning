@@ -1,43 +1,26 @@
 import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowBigLeft, Upload, Image as ImageIcon, CheckCircle, AlertTriangle, Scan } from 'lucide-react';
+import { ArrowBigLeft, Upload, Image as ImageIcon, CheckCircle, AlertTriangle, Scan, X, Plus } from 'lucide-react';
 
 // ============================================================
-// Composant ScanEffect — laser qui scanne la photo de groupe
+// Composant ScanEffect
 // ============================================================
 const ScanEffect = ({ imageUrl }) => (
   <div className="relative rounded-xl overflow-hidden shadow-lg border-2 border-blue-400">
-    {/* Image de fond */}
     <img src={imageUrl} alt="Scan en cours" className="w-full h-auto opacity-80" />
-
-    {/* Overlay sombre */}
     <div className="absolute inset-0 bg-blue-950/30" />
-
-    {/* Ligne laser qui descend */}
     <div
       className="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-blue-400 to-transparent shadow-[0_0_18px_4px_rgba(96,165,250,0.8)]"
-      style={{
-        animation: 'scanLine 2s ease-in-out infinite',
-        top: 0,
-      }}
+      style={{ animation: 'scanLine 2s ease-in-out infinite', top: 0 }}
     />
-
-    {/* Halo au-dessus du laser */}
     <div
       className="absolute left-0 right-0 h-16 bg-gradient-to-b from-blue-400/20 to-transparent"
-      style={{
-        animation: 'scanLine 2s ease-in-out infinite',
-        top: 0,
-      }}
+      style={{ animation: 'scanLine 2s ease-in-out infinite', top: 0 }}
     />
-
-    {/* Coins animés */}
     <div className="absolute top-2 left-2 w-6 h-6 border-t-2 border-l-2 border-blue-400 rounded-tl" />
     <div className="absolute top-2 right-2 w-6 h-6 border-t-2 border-r-2 border-blue-400 rounded-tr" />
     <div className="absolute bottom-2 left-2 w-6 h-6 border-b-2 border-l-2 border-blue-400 rounded-bl" />
     <div className="absolute bottom-2 right-2 w-6 h-6 border-b-2 border-r-2 border-blue-400 rounded-br" />
-
-    {/* Label */}
     <div className="absolute bottom-4 left-0 right-0 flex justify-center">
       <span className="bg-blue-900/80 text-blue-200 text-xs px-3 py-1 rounded-full
         flex items-center gap-2 backdrop-blur-sm border border-blue-400/30">
@@ -45,8 +28,6 @@ const ScanEffect = ({ imageUrl }) => (
         Analyse biométrique en cours...
       </span>
     </div>
-
-    {/* Animation CSS */}
     <style>{`
       @keyframes scanLine {
         0%   { transform: translateY(0); opacity: 1; }
@@ -65,13 +46,37 @@ const ScanEffect = ({ imageUrl }) => (
 // Page principale
 // ============================================================
 const DemoReconnaissance = () => {
-  const [referenceFiles, setReferenceFiles]   = useState([]);
-  const [groupFile, setGroupFile]             = useState(null);
-  const [groupPreview, setGroupPreview]       = useState(null);
-  const [status, setStatus]                   = useState({ type: '', message: '' });
-  const [resultImage, setResultImage]         = useState(null);
-  const [loading, setLoading]                 = useState(false);
+  const [referenceFiles, setReferenceFiles] = useState([]);
+  const [groupFile, setGroupFile]           = useState(null);
+  const [groupPreview, setGroupPreview]     = useState(null);
+  const [status, setStatus]                 = useState({ type: '', message: '' });
+  const [resultImage, setResultImage]       = useState(null);
+  const [loading, setLoading]               = useState(false);
 
+  // Ref pour scroller vers le résultat
+  const resultRef = useRef(null);
+
+  // ---- Gestion des références ----
+
+  // Ajouter des photos (sans écraser les existantes)
+  const handleAddReferences = (e) => {
+    const newFiles = Array.from(e.target.files);
+    setReferenceFiles(prev => {
+      // Éviter les doublons par nom de fichier
+      const existingNames = new Set(prev.map(f => f.name));
+      const filtered = newFiles.filter(f => !existingNames.has(f.name));
+      return [...prev, ...filtered];
+    });
+    // Reset l'input pour permettre de re-sélectionner les mêmes fichiers
+    e.target.value = '';
+  };
+
+  // Retirer une photo de référence
+  const handleRemoveReference = (index) => {
+    setReferenceFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // ---- Gestion de la photo de groupe ----
   const handleGroupFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -81,6 +86,7 @@ const DemoReconnaissance = () => {
     }
   };
 
+  // ---- Lancer la reconnaissance ----
   const handlePredict = async (e) => {
     e.preventDefault();
     if (referenceFiles.length === 0) {
@@ -113,8 +119,8 @@ const DemoReconnaissance = () => {
       });
 
       if (response.ok) {
-        const blob         = await response.blob();
-        const imageUrl     = URL.createObjectURL(blob);
+        const blob          = await response.blob();
+        const imageUrl      = URL.createObjectURL(blob);
         const facesDetected = response.headers.get('X-Faces-Detected');
 
         setResultImage(imageUrl);
@@ -122,6 +128,12 @@ const DemoReconnaissance = () => {
           type: 'success',
           message: `Reconnaissance terminée ! ${facesDetected} visage(s) détecté(s).`,
         });
+
+        // Scroll automatique vers le résultat
+        setTimeout(() => {
+          resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+
       } else {
         const data = await response.json();
         setStatus({ type: 'error', message: data.detail || "Erreur lors de la prédiction." });
@@ -152,22 +164,19 @@ const DemoReconnaissance = () => {
           </p>
         </div>
 
-        {/* Bandeau de statut */}
+        {/* Bandeau statut */}
         {status.message && (
-          <div
-            className={`p-4 mx-8 mt-8 rounded-lg flex items-center gap-3 ${
-              status.type === 'error'
-                ? 'bg-red-100 text-red-800 border border-red-200'
-                : status.type === 'success'
-                ? 'bg-green-100 text-green-800 border border-green-200'
-                : 'bg-blue-100 text-blue-800 border border-blue-200'
-            }`}
-          >
-            {status.type === 'error' ? (
-              <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-            ) : (
-              <CheckCircle className="w-5 h-5 flex-shrink-0" />
-            )}
+          <div className={`p-4 mx-8 mt-8 rounded-lg flex items-center gap-3 ${
+            status.type === 'error'
+              ? 'bg-red-100 text-red-800 border border-red-200'
+              : status.type === 'success'
+              ? 'bg-green-100 text-green-800 border border-green-200'
+              : 'bg-blue-100 text-blue-800 border border-blue-200'
+          }`}>
+            {status.type === 'error'
+              ? <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+              : <CheckCircle className="w-5 h-5 flex-shrink-0" />
+            }
             <span>{status.message}</span>
           </div>
         )}
@@ -175,7 +184,7 @@ const DemoReconnaissance = () => {
         <form onSubmit={handlePredict} className="p-8 space-y-12">
           <div className="grid md:grid-cols-2 gap-12">
 
-            {/* Étape 1 — Références */}
+            {/* ---- Étape 1 : Références ---- */}
             <div className="space-y-4">
               <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
                 <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
@@ -184,54 +193,100 @@ const DemoReconnaissance = () => {
                 Références (Support Set)
               </h2>
               <p className="text-sm text-gray-500">
-                Nommez les fichiers avec le prénom de la personne (ex :{' '}
-                <b>Lounas.jpg</b>).
+                Nommez les fichiers avec le prénom de la personne (ex : <b>Lounas.jpg</b>).
+                Vous pouvez ajouter des photos en plusieurs fois.
               </p>
 
-              <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center
+              {/* Zone d'upload principale */}
+              <div className="border-2 border-dashed border-gray-300 rounded-xl p-5 text-center
                 hover:bg-gray-50 transition-colors">
                 <input
                   type="file"
                   multiple
                   accept="image/*"
-                  onChange={(e) => setReferenceFiles(Array.from(e.target.files))}
+                  onChange={handleAddReferences}
                   className="hidden"
                   id="support-upload"
                 />
                 <label htmlFor="support-upload" className="cursor-pointer flex flex-col items-center">
                   <Upload className="w-8 h-8 text-blue-500 mb-2" />
-                  <span className="text-gray-700 font-medium">
-                    Sélectionner des références
-                  </span>
+                  <span className="text-gray-700 font-medium">Sélectionner des références</span>
                   <span className="text-xs text-gray-400 mt-1">
                     {referenceFiles.length > 0
-                      ? `${referenceFiles.length} fichier(s) prêt(s)`
+                      ? `${referenceFiles.length} photo(s) chargée(s)`
                       : 'Aucun fichier'}
                   </span>
                 </label>
               </div>
 
-              {/* Miniatures des références */}
+              {/* Grille des miniatures avec bouton de suppression */}
               {referenceFiles.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {referenceFiles.map((f, i) => (
-                    <div key={i} className="relative group">
-                      <img
-                        src={URL.createObjectURL(f)}
-                        alt={f.name}
-                        className="w-14 h-14 object-cover rounded-lg border-2 border-blue-200 shadow-sm"
+                <div className="space-y-2">
+                  <div className="flex flex-wrap gap-3 mt-1 max-h-64 overflow-y-auto p-1">
+                    {referenceFiles.map((f, i) => (
+                      <div key={i} className="relative group flex-shrink-0">
+                        <img
+                          src={URL.createObjectURL(f)}
+                          alt={f.name}
+                          className="w-16 h-16 object-cover rounded-lg border-2 border-blue-200
+                            shadow-sm group-hover:border-blue-400 transition-colors"
+                        />
+                        {/* Nom sous la miniature */}
+                        <span className="block text-center text-[10px] text-gray-500
+                          truncate w-16 mt-1">
+                          {f.name.split('.')[0]}
+                        </span>
+                        {/* Bouton supprimer */}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveReference(i)}
+                          className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600
+                            text-white rounded-full w-5 h-5 flex items-center justify-center
+                            shadow-md transition-colors opacity-0 group-hover:opacity-100"
+                          title="Retirer cette photo"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+
+                    {/* Bouton "+" pour ajouter d'autres photos */}
+                    <div className="flex-shrink-0">
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={handleAddReferences}
+                        className="hidden"
+                        id="support-upload-more"
                       />
-                      <span className="absolute -bottom-5 left-0 right-0 text-center text-[10px]
-                        text-gray-500 truncate w-14">
-                        {f.name.split('.')[0]}
-                      </span>
+                      <label
+                        htmlFor="support-upload-more"
+                        className="w-16 h-16 flex flex-col items-center justify-center
+                          border-2 border-dashed border-blue-300 rounded-lg cursor-pointer
+                          hover:bg-blue-50 hover:border-blue-400 transition-colors"
+                        title="Ajouter d'autres photos"
+                      >
+                        <Plus className="w-5 h-5 text-blue-400" />
+                        <span className="text-[10px] text-blue-400 mt-1">Ajouter</span>
+                      </label>
                     </div>
-                  ))}
+                  </div>
+
+                  {/* Bouton tout effacer */}
+                  <button
+                    type="button"
+                    onClick={() => setReferenceFiles([])}
+                    className="text-xs text-red-400 hover:text-red-600 transition-colors
+                      flex items-center gap-1 mt-1"
+                  >
+                    <X className="w-3 h-3" /> Tout effacer
+                  </button>
                 </div>
               )}
             </div>
 
-            {/* Étape 2 — Photo de groupe */}
+            {/* ---- Étape 2 : Photo de groupe ---- */}
             <div className="space-y-4">
               <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
                 <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
@@ -243,7 +298,7 @@ const DemoReconnaissance = () => {
                 L'IA détectera les visages et les comparera aux références fournies.
               </p>
 
-              <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center
+              <div className="border-2 border-dashed border-gray-300 rounded-xl p-5 text-center
                 hover:bg-gray-50 transition-colors">
                 <input
                   type="file"
@@ -263,18 +318,14 @@ const DemoReconnaissance = () => {
                 </label>
               </div>
 
-              {/* Preview de la photo de groupe — avec scan si loading */}
+              {/* Aperçu normal */}
               {groupPreview && !loading && !resultImage && (
                 <div className="mt-2 rounded-xl overflow-hidden shadow-md border border-gray-200">
-                  <img
-                    src={groupPreview}
-                    alt="Aperçu photo de groupe"
-                    className="w-full h-auto"
-                  />
+                  <img src={groupPreview} alt="Aperçu" className="w-full h-auto" />
                 </div>
               )}
 
-              {/* Effet SCAN pendant le chargement */}
+              {/* Effet scan pendant le loading */}
               {groupPreview && loading && (
                 <div className="mt-2">
                   <ScanEffect imageUrl={groupPreview} />
@@ -304,15 +355,34 @@ const DemoReconnaissance = () => {
           </button>
         </form>
 
-        {/* Résultat */}
+        {/* ---- Résultat ---- */}
         {resultImage && (
-          <div className="p-8 border-t border-gray-100 bg-gray-50">
-            <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">
+          <div
+            ref={resultRef}
+            className="p-8 border-t border-gray-100 bg-gray-50 scroll-mt-8"
+          >
+            <h3 className="text-xl font-bold text-gray-800 mb-2 text-center">
               Résultat de la Reconnaissance
             </h3>
+            <p className="text-center text-sm text-gray-500 mb-6">
+              {status.message}
+            </p>
             <div className="rounded-xl overflow-hidden shadow-lg border-4 border-white
               mx-auto max-w-3xl">
               <img src={resultImage} alt="Résultat" className="w-full h-auto" />
+            </div>
+
+            {/* Bouton télécharger */}
+            <div className="flex justify-center mt-6">
+              <a
+                href={resultImage}
+                download="reconnaissance_result.jpg"
+                className="px-6 py-3 bg-blue-900 hover:bg-blue-950 text-white rounded-full
+                  font-medium transition-all shadow-md hover:shadow-lg flex items-center gap-2
+                  text-sm"
+              >
+                Télécharger le résultat
+              </a>
             </div>
           </div>
         )}
