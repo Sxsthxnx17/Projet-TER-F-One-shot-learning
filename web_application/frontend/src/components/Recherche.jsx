@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link } from "react-router-dom"
-import recherche from '../assets/recherche_2.jpg'
-import { Users,Circle, Bot, Search, Target, ArrowBigRight, User } from 'lucide-react'
+import recherche from '../assets/recherche_2.png'
+import { Users, Circle, Layers, Search, Target, ArrowBigRight } from 'lucide-react'
 
 const Recherche = () => {
   return (
@@ -12,7 +12,7 @@ const Recherche = () => {
       <div className='flex-1 w-full lg:mr-8 xl:mr-12 relative order-2 
       lg:order-1 mt-10 lg:mt-0'>
         <div 
-        className='w-full maw-w-md mx-auto lg:max-w-lg xl:max-w-xl 
+        className='w-full max-w-md mx-auto lg:max-w-lg xl:max-w-xl 
         h-[300px] sm:h-[350px] md:h-[400px] lg:h-[450px] xl:h-[500px]
         overflow-hidden shadow-lg md:shadow-xl relative z-10 -rotate-2
         rounded-[40%_60%_70%_30%/40%_50%_60%_60%] hover:rotate-0
@@ -20,7 +20,7 @@ const Recherche = () => {
         data-aos="fade-right"
         data-aos-delay="200"
         >
-          <img src={recherche} alt="Recherche" 
+          <img src={recherche} alt="Pipeline de Recherche" 
           className='object-cover w-full h-full transform hover:scale-110 
           transition-transform duration-700 '/>
         </div>
@@ -31,7 +31,6 @@ const Recherche = () => {
       z-0'
       data-aos='zoom-in'
       data-aos-delay='500'>
-
       </div>
       <div className='hidden md:block absolute border-2 border-blue-700 
       top-4 left-4 w-16 h-16 md:w-20 md:h-20 lg:w-24 rounded-full
@@ -50,7 +49,6 @@ const Recherche = () => {
               de recherche 
               <span className='text-blue-500'> avancée</span>
             </span>
-
           </h2>
           <div className='flex gap-3 mt-4 justify-center lg:justify-start'>
             <Circle className='text-blue-500 w-5 h-5'></Circle>
@@ -62,11 +60,8 @@ const Recherche = () => {
         text-center lg:text-left'
         data-aos="fade-left"
         data-aos-delay="100">
-          Lorem ipsum dolor sit amet consectetur adipisicing elit. 
-          Doloremque rerum aut laborum. Perspiciatis, quos. Illo,
-          numquam harum doloremque eveniet reprehenderit nemo excepturi impedit
-          alias. Alias laudantium tempore natus eveniet quo?
-
+          Notre système combine des algorithmes de pointe en vision par ordinateur et meta-learning. 
+          Chaque composant contribue à une reconnaissance faciale robuste et rapide, même avec un seul exemple par personne.
         </p>
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 
         md:gap-6 mt-8 md:mt-10'
@@ -75,65 +70,63 @@ const Recherche = () => {
         >
           <div className='bg-white p-4 md:p-6 rounded-xl md:rounded-2xl 
           border border-gray-100 shadow-md md:shadow-lg transition-all
-          hover:shadow-xl'>
+          hover:shadow-xl hover:scale-105'>
             <div className='w-10 h-10 md:w-12 md:h-12 flex items-center 
             justify-center rounded-lg bg-blue-100 mb-3 md:mb-4 '>
-              <Bot className='text-blue-500 w-5 h-5 md:w-6 md:h-6 '/>
+              <Target className='text-blue-500 w-5 h-5 md:w-6 md:h-6 '/>
             </div>
             <h3 className='text-base md:text-lg font-semibold text-gray-800
-            mb-2'> YOLOv5
+            mb-2'> YOLOv8
             </h3>
             <p className='text-gray-600 text-xs md:text-sm'> 
-              Lorem ipsum dolor sit amet consectetur adipisicing elit.
+              Détection ultra-rapide des visages avec précision en temps réel sur images de groupe.
             </p> 
           </div>
 
           <div className='bg-white p-4 md:p-6 rounded-xl md:rounded-2xl 
           border border-gray-100 shadow-md md:shadow-lg transition-all
-          hover:shadow-xl'>
+          hover:shadow-xl hover:scale-105'>
             <div className='w-10 h-10 md:w-12 md:h-12 flex items-center 
             justify-center rounded-lg bg-blue-100 mb-3 md:mb-4 '>
-              <Search className='text-blue-700 w-5 h-5 md:w-6 md:h-6 '/>
+              <Layers className='text-blue-700 w-5 h-5 md:w-6 md:h-6 '/>
             </div>
             <h3 className='text-base md:text-lg font-semibold text-gray-800
-            mb-2'> MALM
+            mb-2'> ProtoNet
             </h3>
             <p className='text-gray-600 text-xs md:text-sm'> 
-              Lorem ipsum dolor sit amet consectetur adipisicing elit.
+              Meta-learning permettant l'apprentissage avec une seule image par classe (one-shot).
             </p> 
           </div>
 
           <div className='bg-white p-4 md:p-6 rounded-xl md:rounded-2xl 
           border border-gray-100 shadow-md md:shadow-lg transition-all
-          hover:shadow-xl'>
+          hover:shadow-xl hover:scale-105'>
             <div className='w-10 h-10 md:w-12 md:h-12 flex items-center 
             justify-center rounded-lg bg-blue-100 mb-3 md:mb-4 '>
-              <Search className='text-blue-700 w-5 h-5 md:w-6 md:h-6 '/>
+              <Search className='text-blue-800 w-5 h-5 md:w-6 md:h-6 '/>
             </div>
             <h3 className='text-base md:text-lg font-semibold text-gray-800
-            mb-2'> REPTILE
+            mb-2'> ResNet-18
             </h3>
             <p className='text-gray-600 text-xs md:text-sm'> 
-              Lorem ipsum dolor sit amet consectetur adipisicing elit.
+              Extraction de caractéristiques profondes via réseau de neurones convolutif résiduel.
             </p> 
           </div>
 
           <div className='bg-white p-4 md:p-6 rounded-xl md:rounded-2xl 
           border border-gray-100 shadow-md md:shadow-lg transition-all
-          hover:shadow-xl'>
+          hover:shadow-xl hover:scale-105'>
             <div className='w-10 h-10 md:w-12 md:h-12 flex items-center 
             justify-center rounded-lg bg-blue-100 mb-3 md:mb-4 '>
               <Users className='text-blue-900 w-5 h-5 md:w-6 md:h-6 '/>
             </div>
             <h3 className='text-base md:text-lg font-semibold text-gray-800
-            mb-2'> SIFT
+            mb-2'> GraFIQs
             </h3>
             <p className='text-gray-600 text-xs md:text-sm'> 
-              Lorem ipsum dolor sit amet consectetur adipisicing elit.
+              Évaluation automatique de la qualité faciale pour garantir des données de référence optimales.
             </p> 
           </div>
-
-
         </div>
       <div className='flex justify-center lg:justify-start mt-8 
       md:mt-10 '
@@ -148,13 +141,9 @@ const Recherche = () => {
         gap-2 text-sm md:text-base'>
           En savoir plus
           <ArrowBigRight className='w-5 h-5 md:h-5 md:w-5'/>
-
         </Link>
-
       </div>
-
       </div>
-
     </section>
   )
 }
