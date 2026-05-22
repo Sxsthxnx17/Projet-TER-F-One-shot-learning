@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowBigLeft, Upload, CheckCircle, AlertTriangle,
-  ShieldCheck, Camera, Activity, Scan, Eye, Sun, Maximize2, Cpu,
+  ShieldCheck, Camera, Activity, Scan, Cpu,
   Video, X, ZapIcon
 } from 'lucide-react';
 
@@ -225,7 +225,7 @@ const ScoreCard = ({ icon: Icon, label, score, color, show }) => {
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [show, score]);
 
-  const barColor = score >= 70 ? 'bg-green-400' : score >= 40 ? 'bg-yellow-400' : 'bg-red-400';
+  const barColor = score >= 50 ? 'bg-green-400' : 'bg-red-400';
 
   return (
     <div className={`transition-all duration-700 ease-out ${
@@ -271,12 +271,9 @@ const GlobalScore = ({ score, recommendation, show }) => {
     return () => clearInterval(timer);
   }, [show, score]);
 
-  const ringColor  = recommendation === 'bonne' ? 'border-green-500'
-    : recommendation === 'acceptable' ? 'border-yellow-400' : 'border-red-500';
-  const textColor  = recommendation === 'bonne' ? 'text-green-600'
-    : recommendation === 'acceptable' ? 'text-yellow-500' : 'text-red-600';
-  const label      = recommendation === 'bonne' ? 'Bonne qualité'
-    : recommendation === 'acceptable' ? 'Acceptable' : 'À remplacer';
+  const ringColor = recommendation === 'bonne' ? 'border-green-500' : 'border-red-500';
+  const textColor = recommendation === 'bonne' ? 'text-green-600' : 'text-red-600';
+  const label     = recommendation === 'bonne' ? 'Bonne qualité' : 'À remplacer';
 
   return (
     <div className={`flex flex-col items-center transition-all duration-1000 ease-out ${
@@ -311,16 +308,13 @@ const DemoQualite = () => {
   const resultRef = useRef(null);
 
   const metrics = result ? [
-    { icon: Eye,       label: 'Netteté (Sobel)',  score: result.sharpness_score,  color: 'bg-blue-500'   },
-    { icon: Sun,       label: 'Luminosité',        score: result.brightness_score, color: 'bg-yellow-500' },
-    { icon: Maximize2, label: 'Taille du visage',  score: result.face_size_score,  color: 'bg-purple-500' },
-    { icon: Cpu,       label: 'GraFIQs (IA)',      score: result.grafiqs_score,    color: 'bg-teal-500'   },
+    { icon: Cpu, label: 'GraFIQs — Score biométrique', score: result.grafiqs_score, color: 'bg-teal-500' },
   ] : [];
 
   // Dévoilement séquentiel des résultats
   useEffect(() => {
     if (!result) { setVisibleCount(0); return; }
-    const delays = [400, 1800, 3200, 4600, 6000];
+    const delays = [400, 1800, 3200];
     const timers = delays.map((d, i) => setTimeout(() => setVisibleCount(i + 1), d));
     return () => timers.forEach(clearTimeout);
   }, [result]);
@@ -408,8 +402,8 @@ const DemoQualite = () => {
             Audit de Qualité (FIQA)
           </h1>
           <p className="mt-2 text-blue-100">
-            Uploadez une photo ou prenez-en une avec votre webcam — notre moteur hybride
-            (GraFIQs + OpenCV) évalue la qualité biométrique critère par critère.
+            Uploadez une photo ou prenez-en une avec votre webcam — GraFIQs évalue
+            la qualité biométrique et détermine si l'image est exploitable pour la reconnaissance.
           </p>
         </div>
 
@@ -575,7 +569,7 @@ const DemoQualite = () => {
               <div className="space-y-5">
 
                 <div className="flex justify-center py-2">
-                  <GlobalScore score={result.final_score}
+                  <GlobalScore score={result.grafiqs_score}
                     recommendation={result.recommendation} show={visibleCount >= 1} />
                 </div>
 

@@ -1,13 +1,3 @@
-"""
-models/resnet18.py — Architecture ProtoNet encoder
-
-ResNet-18 modifié pour le few-shot learning facial :
-  - conv1 kernel 3x3 (adapté aux images 112x112)
-  - maxpool remplacé par Identity
-  - tête de projection : Linear → ReLU → Linear → BatchNorm1d
-  - normalisation L2 dans le forward (espace sphérique)
-"""
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -26,8 +16,6 @@ class ProtoNetEncoder(nn.Module):
         # Backbone ResNet-18 avec poids ImageNet
         backbone = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
 
-        # Adapté aux images 112x112 :
-        # kernel 3x3 au lieu de 7x7 + suppression du maxpool
         backbone.conv1  = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
         backbone.maxpool = nn.Identity()
 

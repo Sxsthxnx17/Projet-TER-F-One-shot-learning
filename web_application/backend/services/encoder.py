@@ -21,7 +21,13 @@ from utils.preprocessor import pil_to_tensor, EVAL_TRANSFORM
 # CONFIG
 # ============================================================
 WEIGHTS_PATH = Path("models/weights/protonet_best.pth")
-SCALE        = 20.0   # temperature scaling pour le softmax
+SCALE        = 20.0
+
+# Seuil de rejet open-set : distance cosinus > seuil → "Inconnu"
+# distance = 1 - similarité cosinus  (0 = identique, 2 = opposé)
+# Calibré empiriquement : < 0.40 = sûr, 0.40–0.60 = limite, > 0.60 = inconnu
+# Valeur plus permissive (0.60) pour absorber la variance d'une seule image de référence
+DISTANCE_REJECTION_THRESHOLD = 0.60
 
 
 # ============================================================
@@ -141,24 +147,27 @@ def identify_faces(
     encoder: ProtoNetEncoder,
     device: torch.device,
     scale: float = SCALE,
+    rejection_threshold: float = DISTANCE_REJECTION_THRESHOLD,
 ) -> list[dict]:
     """
-    Identifie chaque visage via distance cosinus + assignation greedy.
+    Identifie chaque visage via distance cosinus + assignation greedy + rejet open-set.
 
     Args:
-        query_crops : liste d'images PIL (visages détectés dans la photo de groupe)
-        names       : liste des noms du support set
-        prototypes  : tenseur [N_persons, dim] — prototypes du support set
-        encoder     : ProtoNetEncoder chargé
-        device      : cuda ou cpu
-        scale       : temperature scaling pour le softmax
+        query_crops         : liste d'images PIL (visages détectés dans la photo de groupe)
+        names               : liste des noms du support set
+        prototypes          : tenseur [N_persons, dim] — prototypes du support set
+        encoder             : ProtoNetEncoder chargé
+        device              : cuda ou cpu
+        scale               : temperature scaling pour le softmax
+        rejection_threshold : distance cosinus au-delà de laquelle le visage
+                              est classé "Inconnu" (défaut = DISTANCE_REJECTION_THRESHOLD)
 
     Returns:
         predictions : liste de dicts par visage :
             {
-                "name"      : str,
-                "confidence": float (0-1),
-                "distance"  : float (0-2),
+                "name"      : str,          "Inconnu" si distance > seuil
+                "confidence": float (0-1),  0.0 si inconnu
+                "distance"  : float (0-2),  distance cosinus brute
             }
     """
     encoder.eval()
@@ -169,64 +178,52 @@ def identify_faces(
         emb = encode_image(crop, encoder, device)
         query_embeddings.append(emb)
 
-    query_embeddings = torch.stack(query_embeddings)   # [N_queries, dim]
+    query_embeddings = torch.stack(query_embeddings)          # [N_queries, dim]
 
-    # Distance cosinus : 1 - similarité
-    # query_embeddings et prototypes sont déjà normalisés L2
-    similarities = torch.mm(query_embeddings, prototypes.t())  # [N_queries, N_persons]
-    distances    = 1 - similarities                             # [N_queries, N_persons]
-
-    # Confiances via softmax scalé
-    confidences  = torch.softmax(-distances * scale, dim=1)    # [N_queries, N_persons]
+    # Similarité cosinus (les deux tenseurs sont normalisés L2)
+    similarities = torch.mm(query_embeddings, prototypes.t()) # [N_queries, N_persons]
+    distances    = 1 - similarities                            # [N_queries, N_persons]
 
     n_queries = len(query_crops)
     n_persons = len(names)
 
-    # Assignation gloutonne (greedy matching)
-    # → chaque identité ne peut être attribuée qu'une seule fois
+    # Construire tous les couples (query, personne) triés par distance croissante
     candidates = []
     for q_idx in range(n_queries):
         for p_idx in range(n_persons):
-            candidates.append({
-                "query_idx":  q_idx,
-                "person_idx": p_idx,
-                "confidence": confidences[q_idx, p_idx].item(),
-                "distance":   distances[q_idx, p_idx].item(),
-            })
-
-    candidates.sort(key=lambda x: x["confidence"], reverse=True)
+            candidates.append((
+                distances[q_idx, p_idx].item(),
+                q_idx,
+                p_idx,
+            ))
+    candidates.sort(key=lambda x: x[0])   # meilleure distance d'abord
 
     assigned_queries  = set()
     assigned_persons  = set()
     predictions       = [None] * n_queries
 
-    for cand in candidates:
-        q_idx = cand["query_idx"]
-        p_idx = cand["person_idx"]
-
-        if q_idx in assigned_queries:
+    for dist, q_idx, p_idx in candidates:
+        if q_idx in assigned_queries or p_idx in assigned_persons:
             continue
-        if p_idx in assigned_persons:
-            continue
-
+        if dist > rejection_threshold:
+            # Distance trop grande : personne non reconnue, inutile de continuer
+            break
         predictions[q_idx] = {
             "name":       names[p_idx],
-            "confidence": round(cand["confidence"], 4),
-            "distance":   round(cand["distance"], 4),
+            "confidence": round(1.0 - dist, 4),   # similarité cosinus brute
+            "distance":   round(dist, 4),
         }
         assigned_queries.add(q_idx)
         assigned_persons.add(p_idx)
 
-        if len(assigned_queries) == n_queries:
-            break
-
-    # Visages non assignés (plus de personnes dans le support set)
+    # Visages sans correspondance → Inconnu
     for q_idx in range(n_queries):
         if predictions[q_idx] is None:
+            best_dist = distances[q_idx].min().item()
             predictions[q_idx] = {
                 "name":       "Inconnu",
                 "confidence": 0.0,
-                "distance":   2.0,
+                "distance":   round(best_dist, 4),
             }
 
     return predictions

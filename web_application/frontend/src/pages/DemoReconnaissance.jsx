@@ -25,7 +25,6 @@ const ScanEffect = ({ imageUrl }) => (
       <span className="bg-blue-900/80 text-blue-200 text-xs px-3 py-1 rounded-full
         flex items-center gap-2 backdrop-blur-sm border border-blue-400/30">
         <Scan className="w-3 h-3 animate-pulse" />
-        Analyse biométrique en cours...
       </span>
     </div>
     <style>{`

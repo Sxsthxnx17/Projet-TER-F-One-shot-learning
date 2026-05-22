@@ -174,17 +174,14 @@ async def quality(
     photo: UploadFile = File(..., description="Photo de référence à évaluer"),
 ):
     """
-    Évalue la qualité d'une photo de référence.
+    Évalue la qualité biométrique d'une photo de référence via GraFIQs.
 
     Retourne un JSON avec :
-    - **final_score**      : score global 0-100
-    - **recommendation**   : "bonne" | "acceptable" | "a_remplacer"
-    - **face_detected**    : bool
-    - **sharpness_score**  : score netteté 0-100
-    - **brightness_score** : score luminosité 0-100
-    - **face_size_score**  : score taille visage 0-100
-    - **grafiqs_score**    : score GraFIQs 0-100 (calibré)
-    - **grafiqs_raw**      : score brut GraFIQs (pour debug)
+    - **grafiqs_score**  : score GraFIQs normalisé 0-100
+    - **grafiqs_raw**    : score brut GraFIQs (pour debug)
+    - **recommendation** : "bonne" | "a_remplacer"
+    - **face_detected**  : bool (False si aucun visage trouvé dans les 4 orientations)
+    - **message**        : présent uniquement si aucun visage détecté
     """
     # --- Lire l'image ---
     image_bytes = await photo.read()
@@ -194,25 +191,42 @@ async def quality(
     detector              = request.app.state.detector
     grafiqs_model, device = request.app.state.quality_model
 
-    # --- Détecter le visage ---
-    face_crop, detected = detect_best_face(pil_image, detector)
+    # --- Détecter le visage (avec tentatives de rotation si nécessaire) ---
+    from services.detector import YOLO_CONFIDENCE
 
-    # Construire la box pour le calcul de taille
-    if detected:
-        from services.detector import YOLO_CONFIDENCE
-        results = detector(pil_image, conf=YOLO_CONFIDENCE, verbose=False)
-        best_box  = None
-        best_area = 0
-        for result in results:
-            for box in result.boxes:
-                x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
-                area = (x2 - x1) * (y2 - y1)
-                if area > best_area:
-                    best_area = area
-                    best_box  = (int(x1), int(y1), int(x2), int(y2))
-        box = best_box
-    else:
-        box = None
+    face_crop = None
+    box       = None
+    detected  = False
+
+    for angle in [0, 90, 180, 270]:
+        rotated = pil_image.rotate(-angle, expand=True) if angle != 0 else pil_image
+        face_crop_candidate, det = detect_best_face(rotated, detector)
+
+        if det:
+            face_crop = face_crop_candidate
+            detected  = True
+
+            # Récupérer la box sur l'image pivotée
+            results  = detector(rotated, conf=YOLO_CONFIDENCE, verbose=False)
+            best_area = 0
+            for result in results:
+                for b in result.boxes:
+                    x1, y1, x2, y2 = b.xyxy[0].cpu().numpy()
+                    area = (x2 - x1) * (y2 - y1)
+                    if area > best_area:
+                        best_area = area
+                        box = (int(x1), int(y1), int(x2), int(y2))
+            break
+
+    # Aucun visage trouvé dans aucune orientation → image inutilisable
+    if not detected:
+        return JSONResponse({
+            "grafiqs_score":  0.0,
+            "grafiqs_raw":    None,
+            "recommendation": "a_remplacer",
+            "face_detected":  False,
+            "message":        "Aucun visage détecté. Essayez une image plus nette ou mieux cadrée.",
+        })
 
     # --- Évaluer la qualité ---
     quality_result = assess_image_quality(

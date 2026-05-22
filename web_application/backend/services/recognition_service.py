@@ -185,7 +185,7 @@ def draw_predictions(
         x1, y1, x2, y2 = box
         name            = pred["name"]
         confidence      = pred["confidence"]
-        color           = name_to_color.get(name, "#FFFFFF")
+        color           = "#888888" if name == "Inconnu" else name_to_color.get(name, "#FFFFFF")
 
         # Épaisseur de la boîte proportionnelle à la taille du visage
         box_w = max(BOX_LINE_WIDTH, (x2 - x1) // 80)
